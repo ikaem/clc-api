@@ -1,5 +1,7 @@
 const socketio = require("socket.io");
 
+const { addUser } = require("./users");
+
 const playersCommunicationHistory = [];
 const observersCommunicationHistory = [];
 
@@ -10,9 +12,15 @@ module.exports = {
             const { id } = socket;
             console.log(`we have a connection on socket ${id}`);
 
+            
+
             socket.on("join", ({ socketId, user, room }, callback) => {
                 console.log(`${user} joined game ${room} on socket ${socketId}`);
-                callback("hihihihi...");
+
+                const { player, error } = addUser({ socketId, user, room })
+
+                // using callback to send error data and return from the method...
+                if(error) return callback(error);
 
                 socket.join(room);
 
@@ -21,14 +29,19 @@ module.exports = {
 
 
 
-            socket.on("playersMessage", ({user, message}, callback) => {
-                console.log(`${user} to "tempRoom": ${message}`);
+            socket.on("playersMessage", ({socketIdd, user, room, message}, callback) => {
+                console.log(`${user} to ${room} from socket ${socketIdd}: ${message}`);
 
                 // socket.emit("backendPlayersMessage", {user: "admin", message: "responding in the same useEffect"});
 
-                io.to("tempRoom").emit("backendPlayersMessage", { user, message });
+                io.to(room).emit("backendPlayersMessage", 
+                    { 
+                        user, 
+                        message 
+                    }
+                );
 
-                callback("Thanks");
+                // callback("Thassnks");
             })
 
             socket.on("disconnect", () => {
